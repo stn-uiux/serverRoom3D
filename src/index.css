@@ -1,0 +1,56 @@
+/* Import Inter font for Grafana-like typography */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+body,
+html,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth theme transitions */
+body,
+.grafana-panel,
+.grafana-toolbar,
+.grafana-side-panel,
+.grafana-modal,
+.grafana-input,
+.grafana-select,
+.grafana-btn {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Reset button styles */
+button {
+  font-family: var(--font-family);
+}
+
+/* Reset anchor styles */
+a {
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ErrorMarker bounce animation (replaces per-frame useFrame callback) */
+@keyframes errorBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
