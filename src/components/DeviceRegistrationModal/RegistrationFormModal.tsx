@@ -315,7 +315,7 @@ export const RegistrationFormModal = ({
                 포트를 클릭하여 모듈을 설정하세요
               </span>
             </div>
-            <div style={{ overflow: "hidden", borderRadius: "8px" }}>
+            <div style={{ borderRadius: "8px" }}>
               <DeviceSvgPreview
                 modelName={selectedTemplate.modelName}
                 insertedCards={insertedCards}

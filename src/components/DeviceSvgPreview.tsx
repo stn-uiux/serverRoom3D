@@ -5,6 +5,7 @@
  * SVG 합성(베이스 + 카드 + 모듈) 및 포트 클릭 → 모듈 팝오버 처리.
  */
 import { useEffect, useState, useMemo, useRef, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { equipmentModels, loadCardSvgRaw, loadCardSvgRawSync } from '../utils/cardAssets';
 import { resolveDeviceSvgContent } from '../utils/deviceAssets';
 import type { InsertedCard, InsertedModule } from '../types/equipment';
@@ -462,10 +463,7 @@ export const DeviceSvgPreview = memo(({
       if (!portId) return;
       const portType = portEl.getAttribute("data-port-type") || "port";
       const rect = portEl.getBoundingClientRect();
-      const parentRect = container.parentElement?.getBoundingClientRect() || container.getBoundingClientRect();
-      const relativeX = rect.left - parentRect.left + rect.width / 2;
-      const relativeY = rect.top - parentRect.top;
-      setPopover({ portId, portType, hitboxId: portEl.id, x: relativeX, y: relativeY });
+      setPopover({ portId, portType, hitboxId: portEl.id, x: rect.left + rect.width / 2, y: rect.top });
     };
 
     container.addEventListener("mouseover", handleMouseOver);
@@ -529,22 +527,23 @@ export const DeviceSvgPreview = memo(({
       }} />
 
       {/* 모듈 팝오버 */}
-      {popover && editable && (
+      {/* 모듈 팝오버 - Portal로 렌더링하여 잘림 방지 */}
+      {popover && editable && createPortal(
         <div
           className="module-popover"
           onClick={e => e.stopPropagation()}
           style={{
-            position: "absolute", 
+            position: "fixed", 
             left: popover.x, 
-            top: popover.y < 120 ? popover.y + 24 : popover.y - 8,
-            transform: popover.y < 120 ? "translate(-50%, 0)" : "translate(-50%, -100%)",
-            backgroundColor: "rgba(10, 20, 40, 0.95)",
+            top: popover.y + 30, // 포트 아래쪽에 표시
+            transform: "translateX(-50%)",
+            backgroundColor: "rgba(10, 20, 40, 0.98)",
             border: "1px solid rgba(0, 229, 255, 0.4)",
-            borderRadius: "12px", padding: "12px", zIndex: 10002,
+            borderRadius: "12px", padding: "12px", zIndex: 11000,
             display: "flex", flexDirection: "column", gap: "8px",
             minWidth: "180px",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 229, 255, 0.15)",
-            backdropFilter: "blur(12px)", animation: "eam-fi .15s ease-out",
+            boxShadow: "0 12px 48px rgba(0, 0, 0, 0.7), 0 0 24px rgba(0, 229, 255, 0.2)",
+            backdropFilter: "blur(16px)", animation: "eam-fi .15s ease-out",
           }}
         >
           <div style={{ fontSize: "11px", fontWeight: "700", color: "#80deea", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "2px" }}>
@@ -591,7 +590,8 @@ export const DeviceSvgPreview = memo(({
               모듈 제거
             </button>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
