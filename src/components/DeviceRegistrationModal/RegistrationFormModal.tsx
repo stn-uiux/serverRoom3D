@@ -91,6 +91,7 @@ export const RegistrationFormModal = ({
         }
       } else {
         setNodeId(activeNodeId || "");
+        setSelectedModelIdx(0); // 기본 모델로 초기화
         setDeviceName("");
         setIp("");
         setMac("");
@@ -288,8 +289,8 @@ export const RegistrationFormModal = ({
         {/* 장비 프리뷰 + 모듈 설정 */}
         {selectedTemplate && hasDeviceSvgAsset(selectedTemplate.modelName) && (
           <div style={{
-            margin: "0 24px 16px",
-            padding: "16px",
+            margin: "0 0 32px",
+            padding: "24px",
             borderRadius: "12px",
             backgroundColor: "var(--bg-secondary)",
             border: "1px solid var(--border-medium)",

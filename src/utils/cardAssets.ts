@@ -436,9 +436,9 @@ export const equipmentModels: EquipmentModel[] = [
     baseSvgUrl: "[4U] 7250 IXR-R6d-CARD.svg",
     cardArea: {
       x: 136,
-      y: 22,
+      y: 2,
       width: 828,
-      height: 384,
+      height: 375,
       columns: 1,
       columnWidth: 828,
     },

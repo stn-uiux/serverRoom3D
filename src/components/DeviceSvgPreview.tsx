@@ -107,37 +107,62 @@ export const DeviceSvgPreview = memo(({
 
   const equipModel = useMemo(() => equipmentModels.find(m => m.modelName === modelName), [modelName]);
 
-  // 카드 SVG
-  const [cardSvgMap, setCardSvgMap] = useState<Map<string, string>>(() => {
-    if (insertedCards.length === 0) return new Map();
-    const uniqueFns = [...new Set(insertedCards.map(c => c.cardFileName))];
-    const syncMap = new Map<string, string>();
-    for (const fn of uniqueFns) { const cached = loadCardSvgRawSync(fn); if (cached) syncMap.set(fn, cached); }
-    return syncMap.size === uniqueFns.length ? syncMap : new Map();
-  });
-
+  // 모델 변경 시 HTML 초기화
   useEffect(() => {
-    if (insertedCards.length === 0 || cardSvgMap.size > 0) return;
-    let m = true;
+    setComposedHtml("");
+  }, [modelName]);
+
+  const [cardSvgMap, setCardSvgMap] = useState<Map<string, string>>(new Map());
+
+  // 카드 SVG 로딩 - 필요한 모든 카드 SVG가 로드될 때까지 실행
+  useEffect(() => {
+    if (insertedCards.length === 0) {
+      if (cardSvgMap.size > 0) setCardSvgMap(new Map());
+      return;
+    }
+
     const uniqueFns = [...new Set(insertedCards.map(c => c.cardFileName))];
-    Promise.all(uniqueFns.map(async fn => { const raw = await loadCardSvgRaw(fn); return [fn, raw] as const; }))
-      .then(results => { if (!m) return; const map = new Map<string, string>(); for (const [fn, raw] of results) { if (raw) map.set(fn, raw); } setCardSvgMap(map); });
-    return () => { m = false; };
-  }, [insertedCards.length === 0 ? '' : cardsKey]);
+    const missingFns = uniqueFns.filter(fn => !cardSvgMap.has(fn));
+
+    if (missingFns.length === 0) return;
+
+    let isMounted = true;
+    Promise.all(missingFns.map(async fn => {
+      const raw = await loadCardSvgRaw(fn);
+      return [fn, raw] as const;
+    })).then(results => {
+      if (!isMounted) return;
+      setCardSvgMap(prev => {
+        const next = new Map(prev);
+        results.forEach(([fn, raw]) => {
+          if (raw) next.set(fn, raw);
+        });
+        return next;
+      });
+    });
+
+    return () => { isMounted = false; };
+  }, [cardsKey, cardSvgMap.size]); // cardsKey가 변경되거나 맵 크기가 변할 때 체크
 
   // SVG 합성
   useEffect(() => {
     if (!modelName) return;
-    // 모듈이 없고 캐시 히트이면 스킵
-    if (_previewCache.has(cacheKey) && insertedModules.length === 0) {
-      if (composedHtml !== _previewCache.get(cacheKey)) setComposedHtml(_previewCache.get(cacheKey)!);
+    // 모든 카드가 로드되었는지 확인
+    const allCardsLoaded = insertedCards.every(c => cardSvgMap.has(c.cardFileName));
+    
+    // 모듈이 없고 모든 카드가 로드된 상태에서 유효한 캐시 히트일 때만 캐시 사용
+    if (allCardsLoaded && insertedModules.length === 0 && _previewCache.has(cacheKey)) {
+      const cached = _previewCache.get(cacheKey)!;
+      if (composedHtml !== cached) setComposedHtml(cached);
       return;
     }
     let isMounted = true;
     const compose = async () => {
-      if (insertedCards.length > 0 && cardSvgMap.size === 0) return;
       try {
-        const isModularDevice = insertedCards.length > 0;
+        // 장비가 slots나 rows를 가지고 있으면 modular 장비로 간주
+        const hasSlotsDefined = !!(equipModel?.slots || equipModel?.rows || equipModel?.cardArea);
+        const isModularDevice = insertedCards.length > 0 || hasSlotsDefined;
+        
         const targetModelName = isModularDevice && equipModel?.baseSvgUrl
           ? equipModel.baseSvgUrl.replace(/\.svg$/i, "").replace(/^\[\d+U\]\s*/, "")
           : modelName;
@@ -214,7 +239,10 @@ export const DeviceSvgPreview = memo(({
             hb.setAttribute("data-card-instance", instancePrefix);
           });
 
-          while (cardSvgEl.firstChild) cardGroup.appendChild(cardSvgEl.firstChild);
+          while (cardSvgEl.firstChild) {
+            const child = baseDoc.adoptNode(cardSvgEl.firstChild);
+            cardGroup.appendChild(child);
+          }
           baseSvgEl.appendChild(cardGroup);
         }
 
@@ -302,7 +330,12 @@ export const DeviceSvgPreview = memo(({
         });
 
         const finalHtml = new XMLSerializer().serializeToString(baseDoc);
-        if (insertedModules.length === 0) _previewCache.set(cacheKey, finalHtml);
+        
+        // 모든 카드가 정상적으로 로드된 경우에만 캐시 저장
+        if (allCardsLoaded && insertedModules.length === 0) {
+          _previewCache.set(cacheKey, finalHtml);
+        }
+        
         if (isMounted) setComposedHtml(finalHtml);
       } catch (e) { console.error("DeviceSvgPreview compose error:", e); }
     };
