@@ -160,9 +160,8 @@ export const DeviceSvgPreview = memo(({
     let isMounted = true;
     const compose = async () => {
       try {
-        // 장비가 slots나 rows를 가지고 있으면 modular 장비로 간주
-        const hasSlotsDefined = !!(equipModel?.slots || equipModel?.rows || equipModel?.cardArea);
-        const isModularDevice = insertedCards.length > 0 || hasSlotsDefined;
+        // 실제로 카드가 삽입된 경우에만 modular 베이스 SVG 사용
+        const isModularDevice = insertedCards.length > 0;
         
         const targetModelName = isModularDevice && equipModel?.baseSvgUrl
           ? equipModel.baseSvgUrl.replace(/\.svg$/i, "").replace(/^\[\d+U\]\s*/, "")
