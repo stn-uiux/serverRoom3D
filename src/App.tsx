@@ -535,15 +535,28 @@ const FitToModelsButton = () => {
   const isDarkMode = theme === "dark";
   const fitToScene = useStore((s) => s.fitToScene);
   const selectedRackId = useStore((s) => s.selectedRackId);
+  const isEditMode = useStore((s) => s.isEditMode);
+  const deviceRegistrationModalOpen = useStore((s) => s.deviceRegistrationModalOpen);
+  const importExportModalRackId = useStore((s) => s.importExportModalRackId);
+  const selectedDeviceId = useStore((s) => s.selectedDeviceId);
 
   if (selectedRackId) return null;
+
+  const isModalOpen =
+    deviceRegistrationModalOpen ||
+    importExportModalRackId !== null ||
+    selectedDeviceId !== null;
+
+  const showDashboardWidgets = !isModalOpen && !isEditMode;
+  const rightPosition = showDashboardWidgets ? "380px" : "40px";
 
   return (
     <div
       style={{
         position: "absolute",
         top: "240px",
-        right: "40px",
+        right: rightPosition,
+        transition: "right 0.2s ease-out",
         zIndex: 1000,
         display: "flex",
         flexDirection: "column",

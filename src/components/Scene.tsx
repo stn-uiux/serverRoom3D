@@ -13,7 +13,7 @@ import { ImportedModelMesh } from "./ImportedModelMesh";
 import { CameraController } from "./CameraController";
 import { GRID_SPACING } from "./constants";
 import { useTheme } from "../contexts/ThemeContext";
-import { Plane, Vector3 } from 'three';
+import { Plane, Vector3 } from "three";
 
 /** Syncs camera & controls refs into zustand store for viewport-center spawning */
 const CameraRefSync = () => {
@@ -33,10 +33,7 @@ const DragHandler = () => {
   const updateDragPosition = useStore((state) => state.updateDragPosition);
 
   const { raycaster, mouse, camera } = useThree();
-  const floorPlane = useMemo(
-    () => new Plane(new Vector3(0, 1, 0), 0),
-    [],
-  );
+  const floorPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), 0), []);
   const tempPoint = useMemo(() => new Vector3(), []);
 
   useFrame(() => {
@@ -63,7 +60,23 @@ export const Scene = () => {
   const importedModels = useStore((state) => state.importedModels);
   const draggingModelId = useStore((state) => state.draggingModelId);
   const selectedRackId = useStore((state) => state.selectedRackId);
+  const isEditMode = useStore((state) => state.isEditMode);
+  const deviceRegistrationModalOpen = useStore(
+    (state) => state.deviceRegistrationModalOpen,
+  );
+  const importExportModalRackId = useStore(
+    (state) => state.importExportModalRackId,
+  );
+  const selectedDeviceId = useStore((state) => state.selectedDeviceId);
   const { theme } = useTheme();
+
+  const isModalOpen =
+    deviceRegistrationModalOpen ||
+    importExportModalRackId !== null ||
+    selectedDeviceId !== null;
+
+  const showDashboardWidgets = !selectedRackId && !isModalOpen && !isEditMode;
+  const gizmoMarginX = showDashboardWidgets ? 440 : 100;
 
   // Phase 2-C: useMemo로 감싸서 importedModels 변경 시에만 재계산
   const hasUserLight = useMemo(
@@ -158,8 +171,8 @@ export const Scene = () => {
       />
 
       {!selectedRackId && (
-        <GizmoHelper alignment="top-right" margin={[100, 140]}>
-          <group 
+        <GizmoHelper alignment="top-right" margin={[gizmoMarginX, 140]}>
+          <group
             scale={1.4}
             onPointerOver={() => useStore.setState({ isGizmoHovered: true })}
             onPointerOut={() => useStore.setState({ isGizmoHovered: false })}
@@ -193,10 +206,7 @@ export const Scene = () => {
 
         {/* Racks (filtered by active group) */}
         {groupRacks.map((rack) => (
-          <Rack
-            key={rack.rackId}
-            {...rack}
-          />
+          <Rack key={rack.rackId} {...rack} />
         ))}
 
         {/* The Hidden Drag Engine */}
