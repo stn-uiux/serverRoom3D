@@ -92,7 +92,7 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
     } else {
       setLocalModules([]);
     }
-  }, [device?.itemId]);
+  }, [device?.itemId, JSON.stringify(device?.insertedModules)]);
 
   const deviceWithModules = useMemo(() => {
     if (!device) return null;
@@ -148,12 +148,18 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
     if (device?.deviceId) {
       const currentModules = device.insertedModules || [];
       const updated = [...currentModules.filter(m => hitboxId ? m.hitboxId !== hitboxId : m.portId !== portId), newModule];
-      generateThumbnail().then(thumbUrl => {
-        updateRegisteredDevice(device.deviceId!, {
-          insertedModules: updated,
-          dashboardThumbnailUrl: thumbUrl || device.dashboardThumbnailUrl,
+      
+      // 1. 즉시 스토어 업데이트 (Undo 기록 생성)
+      updateRegisteredDevice(device.deviceId, { insertedModules: updated });
+      
+      // 2. 비동기로 썸네일 생성 및 업데이트 (Undo 스킵)
+      setTimeout(() => {
+        generateThumbnail().then(thumbUrl => {
+          if (thumbUrl) {
+            updateRegisteredDevice(device.deviceId!, { dashboardThumbnailUrl: thumbUrl }, true);
+          }
         });
-      });
+      }, 100);
     }
   }, [device, updateRegisteredDevice]);
 
@@ -164,12 +170,18 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
     if (device?.deviceId) {
       const currentModules = device.insertedModules || [];
       const updated = currentModules.filter(m => hitboxId ? m.hitboxId !== hitboxId : m.portId !== portId);
-      generateThumbnail().then(thumbUrl => {
-        updateRegisteredDevice(device.deviceId!, {
-          insertedModules: updated,
-          dashboardThumbnailUrl: thumbUrl || device.dashboardThumbnailUrl,
+      
+      // 1. 즉시 스토어 업데이트 (Undo 기록 생성)
+      updateRegisteredDevice(device.deviceId, { insertedModules: updated });
+      
+      // 2. 비동기로 썸네일 생성 및 업데이트 (Undo 스킵)
+      setTimeout(() => {
+        generateThumbnail().then(thumbUrl => {
+          if (thumbUrl) {
+            updateRegisteredDevice(device.deviceId!, { dashboardThumbnailUrl: thumbUrl }, true);
+          }
         });
-      });
+      }, 100);
     }
   }, [device, updateRegisteredDevice]);
 

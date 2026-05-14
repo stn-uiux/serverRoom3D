@@ -84,15 +84,18 @@ export interface AppState {
   baselineRacks: Rack[] | null;
   baselineModels: ImportedModel[] | null;
   baselineNodes: HierarchyNode[] | null;
+  baselineRegisteredDevices: RegisteredDevice[] | null;
   undoStack: {
     racks: Rack[];
     importedModels: ImportedModel[];
     nodes: HierarchyNode[];
+    registeredDevices: RegisteredDevice[];
   }[];
   redoStack: {
     racks: Rack[];
     importedModels: ImportedModel[];
     nodes: HierarchyNode[];
+    registeredDevices: RegisteredDevice[];
   }[];
   showUnsavedDialog: boolean;
   pendingAction:
@@ -160,6 +163,7 @@ export interface AppState {
   updateRegisteredDevice: (
     id: string,
     updates: Partial<RegisteredDevice> & { generatedPorts?: GeneratedPort[] },
+    skipUndo?: boolean,
   ) => void;
   upsertRegisteredDevices: (devices: Omit<RegisteredDevice, "deviceId">[]) => {
     added: number;
@@ -413,6 +417,7 @@ export const useStore = create<AppState>()(
   baselineRacks: null,
   baselineModels: null,
   baselineNodes: null,
+  baselineRegisteredDevices: null,
   undoStack: [],
   redoStack: [],
   showUnsavedDialog: false,
@@ -440,6 +445,8 @@ export const useStore = create<AppState>()(
       baselineRacks,
       baselineModels,
       baselineNodes,
+      registeredDevices,
+      baselineRegisteredDevices,
       _importDirty,
     } = get();
     if (_importDirty) return true;
@@ -449,22 +456,23 @@ export const useStore = create<AppState>()(
     const baseRacks = baselineRacks || racks;
     const baseModels = baselineModels || importedModels;
     const baseNodes = baselineNodes || nodes;
+    const baseRegDevices = baselineRegisteredDevices || registeredDevices;
 
     // Robust field-by-field comparison with epsilon tolerance
     return (
       !layoutsEqual(racks, baseRacks) ||
       !layoutsEqual(importedModels, baseModels) ||
-      !layoutsEqual(nodes, baseNodes)
+      !layoutsEqual(nodes, baseNodes) ||
+      !layoutsEqual(registeredDevices, baseRegDevices)
     );
   },
 
   pushUndoState: () => {
-    const { isEditMode, racks, importedModels, nodes, undoStack } = get();
+    const { isEditMode, racks, importedModels, nodes, registeredDevices, undoStack } = get();
     if (!isEditMode) return;
 
-    // Phase 3-A: 단일 structuredClone 호출로 통합 (3회 → 1회)
-    const { racks: r, importedModels: m, nodes: n } = structuredClone({ racks, importedModels, nodes });
-    const newEntry = { racks: r, importedModels: m, nodes: n };
+    const { racks: r, importedModels: m, nodes: n, registeredDevices: rd } = structuredClone({ racks, importedModels, nodes, registeredDevices });
+    const newEntry = { racks: r, importedModels: m, nodes: n, registeredDevices: rd };
 
     set({
       undoStack: [...undoStack, newEntry].slice(-50), // Limit to 50 entries
@@ -473,18 +481,19 @@ export const useStore = create<AppState>()(
   },
 
   undo: () => {
-    const { isEditMode, undoStack, redoStack, racks, importedModels, nodes } = get();
+    const { isEditMode, undoStack, redoStack, racks, importedModels, nodes, registeredDevices } = get();
     if (!isEditMode || undoStack.length === 0) return;
 
     const newStack = [...undoStack];
     const prevState = newStack.pop();
 
     if (prevState) {
-      const currentState = { racks, importedModels, nodes };
+      const currentState = { racks, importedModels, nodes, registeredDevices };
       set({
         racks: prevState.racks,
         importedModels: prevState.importedModels,
         nodes: prevState.nodes,
+        registeredDevices: prevState.registeredDevices,
         undoStack: newStack,
         redoStack: [...redoStack, currentState].slice(-50),
       });
@@ -492,18 +501,19 @@ export const useStore = create<AppState>()(
   },
 
   redo: () => {
-    const { isEditMode, undoStack, redoStack, racks, importedModels, nodes } = get();
+    const { isEditMode, undoStack, redoStack, racks, importedModels, nodes, registeredDevices } = get();
     if (!isEditMode || redoStack.length === 0) return;
 
     const newRedoStack = [...redoStack];
     const nextState = newRedoStack.pop();
 
     if (nextState) {
-      const currentState = { racks, importedModels, nodes };
+      const currentState = { racks, importedModels, nodes, registeredDevices };
       set({
         racks: nextState.racks,
         importedModels: nextState.importedModels,
         nodes: nextState.nodes,
+        registeredDevices: nextState.registeredDevices,
         undoStack: [...undoStack, currentState].slice(-50),
         redoStack: newRedoStack,
       });
@@ -530,12 +540,13 @@ export const useStore = create<AppState>()(
 
     // Phase 3-A: 단일 structuredClone으로 baseline 스냅샷
     const { nodes: currentNodes } = get();
-    const snapshot = structuredClone({ racks, importedModels, nodes: currentNodes });
+    const snapshot = structuredClone({ racks, importedModels, nodes: currentNodes, registeredDevices: get().registeredDevices });
     set({
       layouts: updatedLayouts,
       baselineRacks: snapshot.racks,
       baselineModels: snapshot.importedModels,
       baselineNodes: snapshot.nodes,
+      baselineRegisteredDevices: snapshot.registeredDevices,
       undoStack: [],
       redoStack: [],
       showUnsavedDialog: false,
@@ -558,6 +569,7 @@ export const useStore = create<AppState>()(
           racks: newNodeLayout.racks,
           importedModels: newNodeLayout.importedModels,
           nodes: get().nodes,
+          registeredDevices: get().registeredDevices,
         });
         set({
           activeNodeId: targetNodeId,
@@ -566,6 +578,7 @@ export const useStore = create<AppState>()(
           baselineRacks: newSnap.racks,
           baselineModels: newSnap.importedModels,
           baselineNodes: newSnap.nodes,
+          baselineRegisteredDevices: newSnap.registeredDevices,
           undoStack: [],
           redoStack: [],
           selectedRackId: null,
@@ -594,16 +607,23 @@ export const useStore = create<AppState>()(
       baselineModels,
       baselineNodes,
       activeNodeId,
+      baselineRegisteredDevices,
     } = get();
 
-    if (baselineRacks && baselineModels && baselineNodes) {
+    if (baselineRacks && baselineModels && baselineNodes && baselineRegisteredDevices) {
       // Restore from baseline
       // Phase 3-A: 단일 structuredClone으로 복원
-      const restored = structuredClone({ racks: baselineRacks, importedModels: baselineModels, nodes: baselineNodes });
+      const restored = structuredClone({ 
+        racks: baselineRacks, 
+        importedModels: baselineModels, 
+        nodes: baselineNodes, 
+        registeredDevices: baselineRegisteredDevices 
+      });
       set({
         racks: restored.racks,
         importedModels: restored.importedModels,
         nodes: restored.nodes,
+        registeredDevices: restored.registeredDevices,
         undoStack: [],
         redoStack: [],
         showUnsavedDialog: false,
@@ -648,6 +668,7 @@ export const useStore = create<AppState>()(
           racks: newNodeLayout.racks,
           importedModels: newNodeLayout.importedModels,
           nodes: get().nodes,
+          registeredDevices: get().registeredDevices,
         });
         set({
           activeNodeId: targetNodeId,
@@ -656,6 +677,7 @@ export const useStore = create<AppState>()(
           baselineRacks: discardSnap.racks,
           baselineModels: discardSnap.importedModels,
           baselineNodes: discardSnap.nodes,
+          baselineRegisteredDevices: discardSnap.registeredDevices,
           undoStack: [],
           redoStack: [],
           selectedRackId: null,
@@ -714,17 +736,20 @@ export const useStore = create<AppState>()(
               racks: newNodeLayout.racks,
               importedModels: newNodeLayout.importedModels,
               nodes: get().nodes,
+              registeredDevices: get().registeredDevices,
             });
             return {
               baselineRacks: snap.racks,
               baselineModels: snap.importedModels,
               baselineNodes: snap.nodes,
+              baselineRegisteredDevices: snap.registeredDevices,
             };
           })()
         : {
             baselineRacks: get().baselineRacks,
             baselineModels: get().baselineModels,
             baselineNodes: get().baselineNodes,
+            baselineRegisteredDevices: get().baselineRegisteredDevices,
           }),
 
       undoStack: [], // Clear undo stack on node switch to prevent mixing node states
@@ -815,6 +840,7 @@ export const useStore = create<AppState>()(
   setShowEquipmentInTree: (show) => set({ showEquipmentInTree: show }),
 
   addRegisteredDevice: (deviceData) => {
+    get().pushUndoState();
     // Generate current timestamp in 'YYYY-MM-DD HH:mm:ss' format
     const now = new Date();
     const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
@@ -830,7 +856,8 @@ export const useStore = create<AppState>()(
     }));
   },
 
-  updateRegisteredDevice: (id: string, updates: Partial<RegisteredDevice> & { generatedPorts?: GeneratedPort[] }) => {
+  updateRegisteredDevice: (id, updates, skipUndo = false) => {
+    if (!skipUndo) get().pushUndoState();
     // Generate current timestamp in 'YYYY-MM-DD HH:mm:ss' format
     const now = new Date();
     const tzOffset = now.getTimezoneOffset() * 60000;
@@ -893,6 +920,7 @@ export const useStore = create<AppState>()(
   },
 
   removeRegisteredDevice: (id) => {
+    get().pushUndoState();
     set((state) => {
       const updatedRacks = state.racks.map((rack) => ({
         ...rack,
@@ -917,6 +945,7 @@ export const useStore = create<AppState>()(
   },
 
   upsertRegisteredDevices: (devices) => {
+    get().pushUndoState();
     let added = 0;
     let updated = 0;
 
