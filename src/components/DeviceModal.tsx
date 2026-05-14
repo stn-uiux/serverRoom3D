@@ -52,13 +52,21 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   // Store 셀렉터
-  const { rawDevice, rackName } = useStore(useShallow(useCallback((s) => {
-    if (!deviceId) return { rawDevice: null, rackName: "" };
+  const { rawDevice, rackName, registeredDevice } = useStore(useShallow(useCallback((s) => {
+    if (!deviceId) return { rawDevice: null, rackName: "", registeredDevice: null };
+    let rawDevice = null;
+    let rackName = "";
     for (const r of s.racks) {
       const d = r.devices.find(d => d.itemId === deviceId || d.deviceId === deviceId);
-      if (d) return { rawDevice: d, rackName: r.rackTitle || `Rack ${r.rackId.slice(0, 4).toUpperCase()}` };
+      if (d) {
+        rawDevice = d;
+        rackName = r.rackTitle || `Rack ${r.rackId.slice(0, 4).toUpperCase()}`;
+        break;
+      }
     }
-    return { rawDevice: null, rackName: "" };
+    const targetId = rawDevice?.deviceId || deviceId;
+    const registeredDevice = s.registeredDevices.find(rd => rd.deviceId === targetId) || null;
+    return { rawDevice, rackName, registeredDevice };
   }, [deviceId])));
 
   const updateRegisteredDevice = useStore((s) => s.updateRegisteredDevice);
@@ -233,6 +241,11 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
 
   const existingModule = modulePopover ? getModuleForPort(modulePopover.portId, modulePopover.hitboxId) : undefined;
 
+  const displayVendor = device.vendor || registeredDevice?.vendor;
+  const displayModel = device.modelName || registeredDevice?.modelName;
+  const displayIp = device.IPAddr || registeredDevice?.IPAddr;
+  const displayMac = device.macAddr || registeredDevice?.macAddr;
+
   return createPortal(
     <div className="device-modal-overlay" onClick={onClose}>
       <div className="device-modal-content" onClick={e => e.stopPropagation()}>
@@ -246,6 +259,10 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
             <div className="device-modal-meta">
               <span className="device-type-badge">{device.type || "Router"}</span>
               <span className="device-rack-info">Rack: {rackName || device.rackId || "Unknown"}</span>
+              {displayVendor && <span className="device-rack-info">Vendor: {displayVendor}</span>}
+              {displayModel && <span className="device-rack-info">Model: {displayModel}</span>}
+              {displayIp && <span className="device-rack-info">IP: {displayIp}</span>}
+              {displayMac && <span className="device-rack-info">MAC: {displayMac}</span>}
               {localModules.length > 0 && (
                 <span className="module-count-badge">모듈 {localModules.length}개</span>
               )}
