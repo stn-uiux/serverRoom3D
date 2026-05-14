@@ -400,6 +400,7 @@ export const equipmentModels: EquipmentModel[] = [
     modelId: "7250-ixr-r4",
     modelName: "7250 IXR-R4",
     baseSvgUrl: "[2U] 7250 IXR-R4-CARD.svg",
+    equipmentSize: { width: 984, height: 192 },
     cardArea: {
       x: 104,
       y: 4,
@@ -413,6 +414,7 @@ export const equipmentModels: EquipmentModel[] = [
     modelId: "7250-ixr-r6",
     modelName: "7250 IXR-R6",
     baseSvgUrl: "[3U] 7250 IXR-R6-CARD.svg",
+    equipmentSize: { width: 984, height: 288 },
     cardArea: {
       x: 104,
       y: 4,
@@ -434,6 +436,7 @@ export const equipmentModels: EquipmentModel[] = [
     modelName: "7250 IXR-R6d",
     rackUnit: "4U",
     baseSvgUrl: "[4U] 7250 IXR-R6d-CARD.svg",
+    equipmentSize: { width: 984, height: 384 },
     cardArea: {
       x: 136,
       y: 2,
@@ -457,6 +460,7 @@ export const equipmentModels: EquipmentModel[] = [
     modelName: "7250 IXR-R6dl",
     rackUnit: "7U",
     baseSvgUrl: "[7U] 7250 IXR-R6dl-CARD.svg",
+    equipmentSize: { width: 984, height: 672 },
     cardArea: {
       x: 136,
       y: 22,
