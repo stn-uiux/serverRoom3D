@@ -26,6 +26,7 @@ export function usePortInteraction(
   isModularDevice: boolean,
   generatedPorts: GeneratedPort[],
   generatedPortMap: Map<string, GeneratedPort>,
+  editable: boolean = true,
 ) {
   const portStateMap = useMemo(
     () => new Map(portStates.map(p => [p.portId, p])),
@@ -83,6 +84,7 @@ export function usePortInteraction(
       tooltip.innerHTML = `
         <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:#80deea;">${displayType} ${displayId}</div>
         <div style="font-weight:600; color:${statusColor}; font-size:12px; text-shadow:0 0 4px ${statusColor}40;">${statusStr}</div>
+        ${editable ? `<div style="margin-top:4px; font-size:11px; color:#e0f7fa; opacity:0.8;">Click to manage module</div>` : ""}
       `;
       tooltip.style.display = "block";
     };
@@ -99,6 +101,7 @@ export function usePortInteraction(
     const handleMouseOut = () => resetHover();
 
     const handleClick = (e: MouseEvent) => {
+      if (!editable) return;
       e.stopPropagation();
       const target = e.target as SVGElement;
       const portEl = target.closest<SVGElement>(PORT_SELECTOR);
@@ -139,7 +142,7 @@ export function usePortInteraction(
       container.removeEventListener("mouseout", handleMouseOut);
       container.removeEventListener("click", handleClick);
     };
-  }, [composedHtml, portStateMap, portStates, isModularDevice, generatedPortMap, generatedPorts]);
+  }, [composedHtml, portStateMap, portStates, isModularDevice, generatedPortMap, generatedPorts, editable]);
 
   return portStateMap;
 }

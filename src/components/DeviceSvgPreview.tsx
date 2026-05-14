@@ -437,7 +437,7 @@ export const DeviceSvgPreview = memo(({
 
         tooltip.innerHTML = `
           <div style="font-weight:700; font-size:13px; margin-bottom:4px; color:#80deea;">${portType.toUpperCase()} ${displayId}</div>
-          <div style="font-size:11px; color:#e0f7fa; opacity:0.8;">Click to manage module</div>
+          ${editable ? `<div style="font-size:11px; color:#e0f7fa; opacity:0.8;">Click to manage module</div>` : ""}
         `;
         tooltip.style.display = "block";
       }

@@ -12,10 +12,11 @@ import type { Device, PortState } from '../types';
 import './DeviceModal.css';
 
 // ─── SvgPortView ─── (SVG 프리뷰 + 포트 상호작용)
-const SvgPortView = memo(({ device, portStates, tooltipRef }: {
+const SvgPortView = memo(({ device, portStates, tooltipRef, editable }: {
   device: Device;
   portStates: PortState[];
   tooltipRef: React.RefObject<HTMLDivElement>;
+  editable?: boolean;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -34,6 +35,7 @@ const SvgPortView = memo(({ device, portStates, tooltipRef }: {
     isModularDevice,
     generatedPorts,
     generatedPortMap,
+    editable,
   );
 
   return (
@@ -82,6 +84,7 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
   // ─── 모듈 상태 관리 ───
   const [modulePopover, setModulePopover] = useState<ModulePopoverData | null>(null);
   const [localModules, setLocalModules] = useState<InsertedModule[]>([]);
+  const isEditMode = useStore(s => s.isEditMode);
 
   useEffect(() => {
     if (device?.insertedModules) {
@@ -247,6 +250,7 @@ export const DeviceModal = ({ deviceId, onClose }: { deviceId: string; onClose: 
                 device={deviceWithModules}
                 portStates={devicePortStates}
                 tooltipRef={tooltipRef as React.RefObject<HTMLDivElement>}
+                editable={isEditMode}
               />
             </div>
           </div>
