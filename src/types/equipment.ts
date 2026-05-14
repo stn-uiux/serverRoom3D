@@ -66,6 +66,7 @@ export interface EquipmentModel {
   };
   equipmentSize?: {
     width: number;
+    height: number;
   };
   /** mixed layout용 명시적 슬롯 정의 (없으면 uniform grid) */
   slots?: SlotDefinition[];

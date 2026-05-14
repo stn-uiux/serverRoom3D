@@ -486,7 +486,7 @@ export const equipmentModels: EquipmentModel[] = [
     rackUnit: "7U",
     baseSvgUrl: "7250-IXR-6-CARD.svg",
     dashboardThumbnailUrl: "/thumbnails/7250-ixr-6.png",
-    equipmentSize: { width: 984 },
+    equipmentSize: { width: 984, height: 672 },
     rows: [
       createIxrStandardRow("ixr6", 1, 20, 0),
       createIxrStandardRow("ixr6", 2, 130, -6),
@@ -502,7 +502,7 @@ export const equipmentModels: EquipmentModel[] = [
     rackUnit: "13U",
     baseSvgUrl: "7250-IXR-10-CARD.svg",
     dashboardThumbnailUrl: "/thumbnails/7250-ixr-10.png",
-    equipmentSize: { width: 984 },
+    equipmentSize: { width: 984, height: 1248 },
     rows: [
       createIxrStandardRow("ixr10", 1, 20, 0),
       createIxrStandardRow("ixr10", 2, 130, -6),

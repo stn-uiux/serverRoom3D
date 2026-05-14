@@ -6,7 +6,7 @@
  */
 import { useEffect, useState, useMemo, useRef, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { equipmentModels, loadCardSvgRaw, loadCardSvgRawSync } from '../utils/cardAssets';
+import { equipmentModels, loadCardSvgRaw } from '../utils/cardAssets';
 import { resolveDeviceSvgContent } from '../utils/deviceAssets';
 import type { InsertedCard, InsertedModule } from '../types/equipment';
 import { moduleDefinitions } from '../utils/moduleAssets';
