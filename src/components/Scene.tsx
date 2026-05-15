@@ -176,6 +176,7 @@ export const Scene = () => {
             scale={1.4}
             onPointerOver={() => useStore.setState({ isGizmoHovered: true })}
             onPointerOut={() => useStore.setState({ isGizmoHovered: false })}
+            userData={{ isGizmoHelper: true }}
           >
             <GizmoViewcube
               opacity={1}

@@ -337,7 +337,7 @@ export const ImportedModelMesh = ({ model }: ImportedModelMeshProps) => {
       let isGizmo = false;
       while (obj) {
         if (obj.userData?.isInnerContent) isInner = true;
-        if (obj.userData?.isGizmo) isGizmo = true;
+        if (obj.userData?.isGizmo || obj.userData?.isGizmoHelper) isGizmo = true;
         obj = obj.parent;
       }
       return isGizmo && !isInner;

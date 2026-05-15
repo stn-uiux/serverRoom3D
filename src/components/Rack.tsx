@@ -152,7 +152,7 @@ export const Rack = memo(({
       let isGizmo = false;
       while (obj) {
         if (obj.userData?.isInnerContent) isInner = true;
-        if (obj.userData?.isGizmo) isGizmo = true;
+        if (obj.userData?.isGizmo || obj.userData?.isGizmoHelper) isGizmo = true;
         obj = obj.parent;
       }
       return isGizmo && !isInner;
@@ -404,6 +404,16 @@ export const Rack = memo(({
         onPointerDown={handlePointerDown}
         onPointerOver={(e) => {
           if (useStore.getState().isGizmoHovered) return;
+          const hitGizmoHelper = e.intersections.some((hit) => {
+            let obj: Object3D | null = hit.object;
+            while (obj) {
+              if (obj.userData?.isGizmoHelper || obj.userData?.isGizmo) return true;
+              obj = obj.parent;
+            }
+            return false;
+          });
+          if (hitGizmoHelper) return;
+
           e.stopPropagation();
           setHoveredRack(rackId);
         }}
@@ -643,6 +653,16 @@ const DeviceMesh = ({
       position={[0, centerY, -0.41]}
       onClick={(e) => {
         if (useStore.getState().isGizmoHovered) return;
+        const hitGizmoHelper = e.intersections.some((hit) => {
+          let obj: Object3D | null = hit.object;
+          while (obj) {
+            if (obj.userData?.isGizmoHelper || obj.userData?.isGizmo) return true;
+            obj = obj.parent;
+          }
+          return false;
+        });
+        if (hitGizmoHelper) return;
+
         e.stopPropagation();
         onSelect();
       }}
